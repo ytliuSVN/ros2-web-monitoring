@@ -155,7 +155,7 @@ ros2-web-monitoring/
 | :-- | :--- | :--- |
 | 0.1 | 建立 Polyglot Monorepo 骨架：`ros2_ws/`、`backend/`、`frontend/`、`data/` | 目錄結構 |
 | 0.2 | 產出 `data/path_data.csv`：≥ 50 筆遞增的 `latitude,longitude`（高雄市區路線，約 22.62/120.30 起點） | GPS 路徑資料 |
-| 0.3 | 建立 `.gitignore`、`.dockerignore`（排除 `build/`、`install/`、`log/`、`node_modules/`、`__pycache__/`） | 版控衛生 |
+| 0.3 | 建立 `.gitignore`、`.dockerignore`（排除 `build/`、`install/`、`log/`、`node_modules/`、`__pycache__/`） | 版控與建置忽略規則 |
 | 0.4 | 建立 `.env.example`：`ROS_DOMAIN_ID`、`GPS_CSV_PATH`、`PUBLISH_RATE_HZ`、`VITE_WS_URL` | 環境變數契約 |
 | 0.5 | 確認介面契約（Topic 名稱、WS 路徑、JSON 欄位）並寫入 `README.md` 骨架 | 契約文件 |
 
