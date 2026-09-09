@@ -8,16 +8,48 @@
 
 ### 系統資料流
 
-```
-┌─────────────────────┐   DDS / ROS 2 Topic    ┌──────────────────────┐   WebSocket (JSON)   ┌────────────────────┐
-│  GNSS Publisher     │  ───────────────────▶  │  Backend Bridge      │  ─────────────────▶  │  Frontend View     │
-│  ros2_ws (C++)      │      /gps/fix          │  backend (FastAPI)   │     /ws/gps          │  frontend (Vue 3)  │
-│                     │  sensor_msgs/          │                      │                      │                    │
-│  讀取 path_data.csv │  msg/NavSatFix         │  rclpy Subscriber    │   {lat, lon, ...}    │  Leaflet + OSM     │
-│  5 Hz (200 ms) 循環 │                        │  + WS Broadcaster    │                      │  Marker + Polyline │
-└─────────────────────┘                        └──────────────────────┘                      └────────────────────┘
-         │                                                │                                            │
-         └────────────────────────────── docker-compose.yml（單一編排核心 / 共用 network）──────────────┘
+```mermaid
+flowchart TB
+    subgraph compose["docker-compose.yml — 單一編排核心 / 共用 bridge network"]
+        direction TB
+
+        subgraph pub["publisher · ros2_ws (ROS 2 C++)"]
+            direction LR
+            CSV[("data/path_data.csv<br/>latitude, longitude")]
+            NODE["gps_publisher_node.cpp<br/>rclcpp · 5 Hz (200 ms) 循環"]
+            CSV -->|讀取| NODE
+        end
+
+        subgraph be["backend · FastAPI"]
+            direction LR
+            SUB["ros_bridge.py<br/>rclpy Subscriber · SensorDataQoS"]
+            WS["ws_manager.py<br/>WS Broadcaster<br/>+ ring buffer 500 筆"]
+            SUB -->|asyncio Queue| WS
+        end
+
+        subgraph fe["frontend · Vue 3"]
+            direction LR
+            SOCK["useGpsSocket.ts<br/>WebSocket + 自動重連"]
+            TRACK["usePathTrack.ts<br/>軌跡累積 · 點數上限控制"]
+            MAP["MapView.vue<br/>Leaflet + OSM<br/>Marker + Polyline"]
+            SOCK --> TRACK --> MAP
+        end
+
+        pub ==>|"/gps/fix · sensor_msgs/msg/NavSatFix (DDS)"| be
+        be ==>|"ws://backend:8000/ws/gps · JSON"| fe
+    end
+
+    compose -.->|"HTTP :8080"| BROWSER(["瀏覽器"])
+
+    classDef ros fill:#e8f0fe,stroke:#3b6fd4,color:#14213d
+    classDef api fill:#e9f7ef,stroke:#2e9e5b,color:#123524
+    classDef web fill:#fdf1e3,stroke:#d98324,color:#3d2a12
+    classDef ext fill:#f4f4f5,stroke:#8a8a90,color:#27272a
+
+    class CSV,NODE ros
+    class SUB,WS api
+    class SOCK,TRACK,MAP web
+    class BROWSER ext
 ```
 
 ### 技術選型
@@ -89,7 +121,7 @@ ros2-web-monitoring/
 │   │   │   └── TelemetryPanel.vue    # 當前座標數值面板
 │   │   ├── composables/
 │   │   │   ├── useGpsSocket.ts       # WebSocket 連線 + 自動重連
-│   │   │   └── usePathTrack.ts       # 路徑點累積與抽稀
+│   │   │   └── usePathTrack.ts       # 路徑點累積、去重與點數上限控制
 │   │   └── types/gps.ts
 │   ├── index.html
 │   ├── vite.config.ts
@@ -184,7 +216,7 @@ ros2-web-monitoring/
 | :-- | :--- | :--- |
 | 3.1 | `npm create vite@latest`（vue-ts）初始化，安裝 `leaflet` 與 `@types/leaflet` | Vue 3 專案骨架 |
 | 3.2 | `types/gps.ts` + `composables/useGpsSocket.ts`：WebSocket 連線、JSON 解析、指數退避自動重連、連線狀態 ref | 通訊層 composable |
-| 3.3 | `composables/usePathTrack.ts`：累積座標為 `LatLngTuple[]`，上限保護與相同點去重 | 路徑狀態管理 |
+| 3.3 | `composables/usePathTrack.ts`：累積座標為 `LatLngTuple[]`，過濾與前一點重複的座標，並限制陣列最多保留最近 10000 點 | 路徑狀態管理 |
 | 3.4 | `MapView.vue`：初始化 Leaflet 地圖與 OpenStreetMap tile layer，並正確處理 `onUnmounted` 銷毀 | 地圖容器 |
 | 3.5 | 當前位置 `L.marker`（自訂載具圖標）隨新座標更新位置，地圖視角平滑跟隨 | 即時位置標註 |
 | 3.6 | 歷史路徑 `L.polyline` 增量 `addLatLng()` 繪製走過的線段（不整條重建） | 歷史路徑線 |
@@ -229,7 +261,7 @@ ros2-web-monitoring/
 | 5.1 | `csv_reader` 單元測試（`ament_cmake_gtest`）：表頭、空行、非法數值 | C++ 測試 |
 | 5.2 | Backend `pytest`：`NavSatFix` → JSON 轉換與 `ws_manager` 廣播/斷線行為 | Python 測試 |
 | 5.3 | 韌性驗證：Publisher / Backend 任一重啟後系統自我恢復 | 故障復原報告 |
-| 5.4 | 前端效能：>10000 點時的路徑抽稀（decimation）策略 | 長時運行優化 |
+| 5.4 | 前端效能：點數超過上限時，以 Douglas–Peucker 演算法簡化路徑（合併近似共線的點），在視覺形狀不變的前提下減少 Polyline 頂點數 | 長時運行優化 |
 | 5.5 | 錄製 30 秒 Demo GIF 並嵌入 `README.md` | Demo 素材 |
 
 **Phase 5 acceptance criteria:**
@@ -248,7 +280,7 @@ ros2-web-monitoring/
 | `rclpy.spin()` 阻塞 FastAPI event loop | WebSocket 停止推播 | Subscriber 跑在獨立 thread，以 `run_coroutine_threadsafe` 回拋 |
 | Publisher 先啟動、Backend 尚未 ready | 前端初始畫面空白 | Backend ring buffer 補送歷史點 + `healthcheck` 控制啟動順序 |
 | QoS 不匹配（Sensor vs Default） | 訂閱不到訊息 | 兩端一律使用 `SensorDataQoS`（BEST_EFFORT / depth 10）|
-| 前端路徑點無上限累積 | 瀏覽器記憶體膨脹 | `usePathTrack` 上限保護與抽稀 |
+| 前端路徑點無上限累積 | 瀏覽器記憶體膨脹、Polyline 重繪變慢 | `usePathTrack` 只保留最近 10000 點，超出時簡化舊路段 |
 
 ---
 
