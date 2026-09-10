@@ -1,65 +1,154 @@
 # ROS 2 + Web 實時路徑監控系統
 
-## 任務目標
-開發一個端到端的監控系統，將 ROS 2 模擬產生的 GNSS（Global Navigation Satellite Systems）數據，透過後端橋接器即時推送到前端網頁儀表板，並在地圖上繪製路徑。
+將 ROS 2 模擬產生的 GNSS 數據，經由 FastAPI 橋接器即時推送至 Vue 3 儀表板，並在地圖上繪製無人載具的即時位置與歷史路徑。
 
-## 自行產出 GPS 檔案
-`path_data.csv`: 包含一系列的 GPS 座標點（Latitude, Longitude）。
+本文件為跨子專案的介面契約。Topic 名稱、QoS、WebSocket 路徑、JSON 欄位與環境變數名稱一經鎖定，後續 Phase 不再更名。
+
+---
+
+## 架構
+
+```
+CSV ──5 Hz──► Publisher ──/gps/fix──► Backend ──/ws/gps──► Frontend
+path_data.csv   rclcpp NavSatFix        FastAPI JSON         Vue 3 + Leaflet
+```
+
+| 層級 | 技術 | 責任 |
+| :--- | :--- | :--- |
+| Publisher | ROS 2 Humble + C++ (`rclcpp`) | 讀 CSV，以 5 Hz 循環發佈 `NavSatFix` |
+| Backend | Python 3.10 + FastAPI + `rclpy` | 訂閱 Topic，轉 JSON，經 WebSocket 廣播 |
+| Frontend | Vue 3 + Vite + Leaflet | 連線、繪製 Marker 與歷史路徑 |
+| 部署 | Docker Compose | 三個獨立鏡像，共用 bridge network |
+
+一鍵啟動（Phase 4 完成後生效）：
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+瀏覽器開啟 `http://localhost:8080`。本機前端開發則為 `http://localhost:5173`。
+
+---
+
+## 介面契約
+
+| 介面 | 位址 / 名稱 | 格式 |
+| :--- | :--- | :--- |
+| ROS 2 Topic | `/gps/fix` | `sensor_msgs/msg/NavSatFix` |
+| QoS（兩端必須一致） | — | `SensorDataQoS`：BEST_EFFORT、depth 10 |
+| WebSocket | `ws://localhost:8000/ws/gps` | JSON，每筆一則座標 |
+| Health Check | `GET http://localhost:8000/health` | 見下方 |
+| Frontend | `:5173`（Vite dev）/ `:8080`（Nginx） | SPA |
+
+DDS：publisher 與 backend 共用 `ROS_DOMAIN_ID`，並使用 `RMW_IMPLEMENTATION=rmw_cyclonedds_cpp`。
+
+### WebSocket 推播（`GpsFix`）
+
+頻率與 Publisher 相同（預設 5 Hz）。欄位名稱、型別不可更改。
+
+```json
+{
+  "latitude": 22.6273,
+  "longitude": 120.3014,
+  "altitude": 0.0,
+  "status": 0,
+  "timestamp": 1757423401.234,
+  "frame_id": "gps_link",
+  "seq": 42
+}
+```
+
+| 欄位 | 型別 | 來源 | 說明 |
+| :--- | :--- | :--- | :--- |
+| `latitude` | `number` | `NavSatFix.latitude` | 緯度，十進位度 |
+| `longitude` | `number` | `NavSatFix.longitude` | 經度，十進位度 |
+| `altitude` | `number` | `NavSatFix.altitude` | 海拔，公尺；CSV 無此欄時填 `0.0` |
+| `status` | `integer` | `NavSatFix.status.status` | `sensor_msgs/NavSatStatus`：`-1` NO_FIX、`0` FIX |
+| `timestamp` | `number` | `header.stamp` | ROS 時間，秒（含小數）；**不是**伺服器牆鐘 |
+| `frame_id` | `string` | `header.frame_id` | 預設 `"gps_link"` |
+| `seq` | `integer` | Publisher 自增計數 | ROS 2 `Header` 無 `seq`，由節點從 0 遞增，循環重播不重置 |
+
+新 WebSocket 連線會立即收到 ring buffer 中最近最多 500 筆歷史點，其後改收即時推播。
+
+### Health Check
+
+```json
+{
+  "status": "ok",
+  "ros_connected": true,
+  "last_message_time": 1757423401.234
+}
+```
+
+| 欄位 | 型別 | 說明 |
+| :--- | :--- | :--- |
+| `status` | `string` | HTTP 服務存活即為 `"ok"` |
+| `ros_connected` | `boolean` | 曾收到 `/gps/fix` 且訂閱仍有效時為 `true`；Publisher 未啟動時為 `false` |
+| `last_message_time` | `number \| null` | 最近一筆 ROS `header.stamp`（秒）；尚無訊息時為 `null` |
+
+Publisher 未啟動時：`GET /health` 仍回 200，`ros_connected` 為 `false`；`/ws/gps` 可連線、不丟例外。
+
+---
+
+## 環境變數
+
+完整預設值見 [`.env.example`](.env.example)。複製為 `.env` 後覆寫。名稱不可更改。
+
+| 變數 | 預設值 | 誰讀取 |
+| :--- | :--- | :--- |
+| `ROS_DOMAIN_ID` | `0` | publisher、backend |
+| `RMW_IMPLEMENTATION` | `rmw_cyclonedds_cpp` | publisher、backend |
+| `GPS_CSV_PATH` | `/data/path_data.csv` | publisher（容器內路徑；compose 掛載 `./data:/data:ro`） |
+| `PUBLISH_RATE_HZ` | `5` | publisher |
+| `BACKEND_PORT` | `8000` | backend、frontend（WS 目標） |
+| `FRONTEND_PORT` | `8080` | frontend（Nginx） |
+| `VITE_WS_URL` | `ws://localhost:8000/ws/gps` | frontend（Vite 建置時寫入） |
+
+---
+
+## 路徑資料
+
+[`data/path_data.csv`](data/path_data.csv)：高雄市區封閉環路，91 點，相鄰約 50 m。Publisher 索引到底後回到第一筆，接縫與一般點距相同。
 
 ```csv
 latitude,longitude
-22.6273,120.3014
-22.6275,120.3018
-22.6278,120.3022
-22.6282,120.3027
-22.6285,120.3031
+22.627300,120.301400
 ```
 
-## 詳細需求
-### GNSS Publisher (ROS 2)
-* 功能： 撰寫一個 ROS 2 C++ Publisher (`gps_publisher_node.cpp`)。
-* 讀取： 讀取提供的 GPS 路徑檔案 (`path_data.csv`)。
-* 發佈： 以固定頻率 5Hz（`200ms`）循環發佈 `sensor_msgs/msg/NavSatFix` 訊息至 Topic `/gps/fix`。
+- 首行必須為 `latitude,longitude`（無空白）
+- 其餘每行兩個十進位度，小數 6 位
+- 不含 `altitude`；Publisher 填 `0.0`
 
-### Backend Bridge (FastAPI)
-* 功能： 建立一個 FastAPI 應用程式 (`main.py`) 作為 ROS 2 與 Web 的橋樑。
-* 訂閱： 訂閱 ROS 2 的 `/gps/fix` Topic。
-* 轉換： 將接收到的 ROS 2 訊息轉換為 JSON 格式。
-* 發佈： 建立 WebSocket 端點，將即時座標數據推送至前端。
-
-### Frontend View (Vue 3)
-* 功能： 使用 Vue 3 建立應用頁面。
-* 通訊： 連接後端 WebSocket 獲取即時數據。
-* 地圖呈現： 整合地圖庫（如 OpenStreetMap）。
-* 在圖標上標註當前位置，並繪製出無人載具走過的歷史路徑線段。
-
-### 容器化與部署 (Docker)
-* 獨立鏡像： 為 Publisher、 Backend、 Frontend 分別撰寫 Dockerfile。
-* 一鍵啟動： 撰寫 `docker-compose.yml`，確保使用者執行 `docker-compose up` 後，系統能自動完成所有網路設定並正常運作。
+---
 
 ## 目錄結構
 
-採用 Polyglot Monorepo 的目錄架構，並直接讓 `docker-compose.yml` 擔任整體專案的編排核心。
-
 ```
 ros2-web-monitoring/
-├── ros2_ws/                 # 任務一：GNSS Publisher (ROS 2)
-│   ├── src/
-│   │   └── gps_publisher/   # 包含 gps_publisher_node.cpp, CMakeLists.txt, package.xml
+├── ros2_ws/                          # GNSS Publisher (ROS 2 C++)
+│   ├── src/gps_publisher/
+│   │   ├── src/gps_publisher_node.cpp
+│   │   ├── include/gps_publisher/csv_reader.hpp
+│   │   ├── launch/gps_publisher.launch.py
+│   │   ├── config/params.yaml
+│   │   ├── CMakeLists.txt
+│   │   └── package.xml
 │   └── Dockerfile
-├── backend/                 # 任務二：Backend Bridge (FastAPI)
-│   ├── main.py              # FastAPI 應用程式
+├── backend/                          # FastAPI 橋接器
+│   ├── main.py
+│   ├── ros_bridge.py
+│   ├── ws_manager.py
+│   ├── schemas.py
 │   ├── requirements.txt
 │   └── Dockerfile
-├── frontend/                # 任務三：Frontend View (Vue 3)
+├── frontend/                         # Vue 3 儀表板
 │   ├── src/
-│   ├── package.json
+│   ├── nginx.conf
 │   └── Dockerfile
-├── data/
-│   └── path_data.csv        # 自行產出包含 Latitude, Longitude 的 GPS 檔案
-├── docker-compose.yml       # 任務四：容器化與部署，確保執行 docker-compose up 自動完成網路設定
-└── README.md                # 說明整體架構與一鍵啟動指令
+├── data/path_data.csv
+├── docker-compose.yml
+├── .env.example
+├── PLAN.md
+└── README.md
 ```
-
-
-
