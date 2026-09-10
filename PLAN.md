@@ -4,6 +4,15 @@
 
 ---
 
+## Table of Contents
+
+1. [Architecture at a Glance](#architecture-at-a-glance)
+2. [Task Breakdown & Implementation Steps](#task-breakdown--implementation-steps)
+3. [Risk & Mitigation](#risk--mitigation)
+4. [Milestone Summary](#milestone-summary)
+
+---
+
 ## Architecture at a Glance
 
 ### 系統資料流
