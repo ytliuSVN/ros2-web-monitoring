@@ -1,0 +1,40 @@
+# ---------- ROS 2 / colcon ----------
+build/
+install/
+log/
+.colcon_*
+
+# ---------- C / C++ ----------
+*.o
+*.so
+*.a
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# ---------- Node / Vite ----------
+node_modules/
+dist/
+dist-ssr/
+.vite/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---------- 環境變數（.env.example 必須進版控）----------
+.env
+.env.*
+!.env.example
+
+# ---------- 編輯器 / 作業系統 ----------
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp

@@ -1,0 +1,12 @@
+# build context 設為 ./ros2_ws 時生效。
+# colcon 產物一律不進 build context —— image 內會重新 colcon build。
+build/
+install/
+log/
+.colcon_*
+
+*.o
+*.so
+*.a
+
+.DS_Store

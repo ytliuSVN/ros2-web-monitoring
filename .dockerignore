@@ -1,0 +1,36 @@
+# build context 設為 repo 根目錄（context: .）時生效。
+# 若 context 設為子目錄，讀取的是該子目錄下的 .dockerignore。
+
+# ---------- 版控與說明文件 ----------
+.git
+.gitignore
+PLAN.md
+README.md
+
+# ---------- 建置產物 ----------
+**/build/
+**/install/
+**/log/
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/.vite/
+**/__pycache__/
+**/*.py[cod]
+**/.venv/
+**/venv/
+
+# ---------- 測試與型別快取 ----------
+**/.pytest_cache/
+**/.mypy_cache/
+
+# ---------- 環境變數（實際值不進 image）----------
+.env
+**/.env
+**/.env.*
+
+# ---------- 編排檔本身不需進 image ----------
+docker-compose.yml
+
+# ---------- 作業系統 ----------
+**/.DS_Store

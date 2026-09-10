@@ -1,0 +1,12 @@
+# build context 設為 ./backend 時生效。
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+.env
+.env.*
+
+.DS_Store
