@@ -65,7 +65,7 @@ DDS：publisher 與 backend 共用 `ROS_DOMAIN_ID`，並使用 `RMW_IMPLEMENTATI
 | `longitude` | `number` | `NavSatFix.longitude` | 經度，十進位度 |
 | `altitude` | `number` | `NavSatFix.altitude` | 海拔，公尺；CSV 無此欄時填 `0.0` |
 | `status` | `integer` | `NavSatFix.status.status` | `sensor_msgs/NavSatStatus`：`-1` NO_FIX、`0` FIX |
-| `timestamp` | `number` | `header.stamp` | ROS 時間，秒（含小數）；**不是**伺服器牆鐘 |
+| `timestamp` | `number` | `header.stamp` | Publisher 發佈當下的 Unix 秒；Backend 原樣轉發 |
 | `frame_id` | `string` | `header.frame_id` | 預設 `"gps_link"` |
 | `seq` | `integer` | Publisher 自增計數 | ROS 2 `Header` 無 `seq`，由節點從 0 遞增，循環重播不重置 |
 
