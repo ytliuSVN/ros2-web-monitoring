@@ -101,7 +101,7 @@ ros2-web-monitoring/
 │   │       │   └── params.yaml
 │   │       ├── CMakeLists.txt
 │   │       └── package.xml
-│   └── Dockerfile                    # base: ros:humble-ros-base
+│   └── Dockerfile                    # base: ros:humble-ros-base + rmw-cyclonedds-cpp
 │
 ├── backend/                          # 任務二：Backend Bridge (FastAPI)
 │   ├── main.py                       # FastAPI app + lifespan 啟動 ROS 2 node
@@ -109,7 +109,7 @@ ros2-web-monitoring/
 │   ├── ws_manager.py                 # 連線管理與廣播
 │   ├── schemas.py                    # Pydantic 模型（NavSatFix → JSON）
 │   ├── requirements.txt
-│   └── Dockerfile                    # base: ros:humble-ros-base + pip
+│   └── Dockerfile                    # base: ros:humble-ros-base + python3-pip + rmw-cyclonedds-cpp
 │
 ├── frontend/                         # 任務三：Frontend View (Vue 3)
 │   ├── src/
@@ -237,10 +237,10 @@ ros2-web-monitoring/
 | # | Task | Deliverable |
 | :-- | :--- | :--- |
 | 4.1 | `ros2_ws/Dockerfile`：`ros:humble-ros-base` → `colcon build` → entrypoint `source install/setup.bash` 後 `ros2 launch` | Publisher 鏡像 |
-| 4.2 | `backend/Dockerfile`：`ros:humble-ros-base` + `pip install -r requirements.txt` → `uvicorn main:app --host 0.0.0.0` | Backend 鏡像 |
+| 4.2 | `backend/Dockerfile`：`ros:humble-ros-base` + `apt install python3-pip`（base image 未預裝）+ `pip install -r requirements.txt` → `uvicorn main:app --host 0.0.0.0` | Backend 鏡像 |
 | 4.3 | `frontend/Dockerfile`：multi-stage（`node:20-alpine` build → `nginx:alpine` serve）+ `nginx.conf` 設定 `/ws` proxy 與 SPA fallback | Frontend 鏡像 |
 | 4.4 | `docker-compose.yml`：定義 `publisher` / `backend` / `frontend` 三個 service 與共用 bridge network | 編排核心 |
-| 4.5 | 跨容器 ROS 2 DDS 通訊：統一 `ROS_DOMAIN_ID`、`RMW_IMPLEMENTATION`，必要時使用 `network_mode: host` 或設定 multicast 可達 | DDS 連通性 |
+| 4.5 | 跨容器 ROS 2 DDS 通訊：三個 service 共用 compose bridge network、統一 `ROS_DOMAIN_ID`；兩個 ROS 鏡像加裝 `ros-humble-rmw-cyclonedds-cpp` 並統一 `RMW_IMPLEMENTATION=rmw_cyclonedds_cpp`（避開 Fast DDS 跨容器 SHM transport 的錯誤日誌） | DDS 連通性 |
 | 4.6 | Volume 掛載 `./data:/data:ro` 供 Publisher 讀取 CSV；port 映射 `8000`（backend）/ `8080`（frontend） | 資料與埠口 |
 | 4.7 | `depends_on` + backend `healthcheck`，確保啟動順序為 backend ready → frontend | 啟動依賴 |
 | 4.8 | 更新 `README.md`：架構圖、一鍵啟動指令、環境變數表、常見問題排查 | 部署文件 |
@@ -276,7 +276,7 @@ ros2-web-monitoring/
 
 | 風險 | 影響 | 對策 |
 | :--- | :--- | :--- |
-| 容器間 DDS discovery 失敗（multicast 受限） | Backend 收不到 `/gps/fix` | 統一 `ROS_DOMAIN_ID`、改用 `network_mode: host` 或設定 Discovery Server |
+| 容器間 DDS discovery 失敗（multicast 受限） | Backend 收不到 `/gps/fix` | 統一 `ROS_DOMAIN_ID` 並改用 Cyclone DDS；仍不通時讓 publisher 以 `network_mode: "service:backend"` 共用網路命名空間走 loopback |
 | `rclpy.spin()` 阻塞 FastAPI event loop | WebSocket 停止推播 | Subscriber 跑在獨立 thread，以 `run_coroutine_threadsafe` 回拋 |
 | Publisher 先啟動、Backend 尚未 ready | 前端初始畫面空白 | Backend ring buffer 補送歷史點 + `healthcheck` 控制啟動順序 |
 | QoS 不匹配（Sensor vs Default） | 訂閱不到訊息 | 兩端一律使用 `SensorDataQoS`（BEST_EFFORT / depth 10）|
