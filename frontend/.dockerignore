@@ -1,0 +1,13 @@
+# build context 設為 ./frontend 時生效。
+node_modules/
+dist/
+dist-ssr/
+.vite/
+
+.vscode/
+*.local
+
+.env
+.env.*
+
+.DS_Store
