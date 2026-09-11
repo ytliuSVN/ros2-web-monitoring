@@ -1,0 +1,25 @@
+# 編排核心：publisher / backend / frontend 共用 bridge network。
+# 後續 1.5 補 DDS 環境變數；1.6 補 volume / port / healthcheck。
+
+services:
+  publisher:
+    build:
+      context: ./ros2_ws
+    networks:
+      - ros2
+
+  backend:
+    build:
+      context: ./backend
+    networks:
+      - ros2
+
+  frontend:
+    build:
+      context: ./frontend
+    networks:
+      - ros2
+
+networks:
+  ros2:
+    driver: bridge
