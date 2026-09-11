@@ -1,0 +1,4 @@
+# rclpy 來自 Humble base image，不要用 pip 安裝。
+fastapi
+uvicorn[standard]
+pydantic
