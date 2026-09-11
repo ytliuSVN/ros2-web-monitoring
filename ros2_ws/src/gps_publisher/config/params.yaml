@@ -1,0 +1,6 @@
+gps_publisher:
+  ros__parameters:
+    csv_path: /data/path_data.csv
+    publish_rate_hz: 5.0
+    frame_id: gps_link
+    loop: true

@@ -1,6 +1,5 @@
 #include <chrono>
 #include <cstdint>
-#include <cstdlib>
 #include <functional>
 #include <memory>
 #include <stdexcept>
@@ -21,42 +20,56 @@ public:
   GpsPublisherNode()
   : Node("gps_publisher")
   {
+    this->declare_parameter<std::string>("csv_path", "/data/path_data.csv");
+    this->declare_parameter<double>("publish_rate_hz", 5.0);
+    this->declare_parameter<std::string>("frame_id", "gps_link");
+    this->declare_parameter<bool>("loop", true);
+
+    const std::string csv_path = this->get_parameter("csv_path").as_string();
+    const double publish_rate_hz = this->get_parameter("publish_rate_hz").as_double();
+    frame_id_ = this->get_parameter("frame_id").as_string();
+    loop_ = this->get_parameter("loop").as_bool();
+
+    if (publish_rate_hz <= 0.0) {
+      throw std::runtime_error("publish_rate_hz must be > 0");
+    }
+
     publisher_ = this->create_publisher<sensor_msgs::msg::NavSatFix>(
       "/gps/fix", rclcpp::SensorDataQoS());
 
-    const std::string csv_path = resolve_csv_path();
     points_ = read_csv(csv_path);
     if (points_.empty()) {
       throw std::runtime_error("CSV has no data points: " + csv_path);
     }
 
-    timer_ = this->create_wall_timer(
-      std::chrono::milliseconds(200),
-      std::bind(&GpsPublisherNode::on_timer, this));
+    const auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      std::chrono::duration<double>(1.0 / publish_rate_hz));
+    timer_ = this->create_wall_timer(period, std::bind(&GpsPublisherNode::on_timer, this));
 
     RCLCPP_INFO(
       this->get_logger(),
-      "Publishing %zu points from %s on /gps/fix at 5 Hz",
-      points_.size(), csv_path.c_str());
+      "Publishing %zu points from %s on /gps/fix at %.3f Hz (frame_id=%s loop=%s)",
+      points_.size(), csv_path.c_str(), publish_rate_hz, frame_id_.c_str(),
+      loop_ ? "true" : "false");
   }
 
 private:
-  static std::string resolve_csv_path()
-  {
-    const char * env = std::getenv("GPS_CSV_PATH");
-    if (env != nullptr && env[0] != '\0') {
-      return std::string(env);
-    }
-    return "/data/path_data.csv";
-  }
-
   void on_timer()
   {
+    if (index_ >= points_.size()) {
+      if (!loop_) {
+        RCLCPP_INFO(this->get_logger(), "Reached end of CSV; loop is false, stopping");
+        timer_->cancel();
+        return;
+      }
+      index_ = 0;
+    }
+
     const GpsPoint & point = points_[index_];
 
     sensor_msgs::msg::NavSatFix msg;
     msg.header.stamp = this->now();
-    msg.header.frame_id = "gps_link";
+    msg.header.frame_id = frame_id_;
     msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_FIX;
     msg.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS;
     msg.latitude = point.latitude;
@@ -69,14 +82,13 @@ private:
     RCLCPP_DEBUG(this->get_logger(), "seq=%u lat=%.6f lon=%.6f", seq_, msg.latitude, msg.longitude);
     ++seq_;  // ROS 2 Header 無 seq；從 0 遞增，循環重播不重置
     ++index_;
-    if (index_ >= points_.size()) {
-      index_ = 0;
-    }
   }
 
   rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
   std::vector<GpsPoint> points_;
+  std::string frame_id_;
+  bool loop_{true};
   std::size_t index_{0};
   std::uint32_t seq_{0};
 };

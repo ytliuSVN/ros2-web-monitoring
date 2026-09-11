@@ -18,5 +18,10 @@ ament_target_dependencies(gps_publisher_node rclcpp sensor_msgs)
 target_include_directories(gps_publisher_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
-# install(TARGETS / launch / config) 留到 2.6。
+install(TARGETS gps_publisher_node
+  DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY launch config
+  DESTINATION share/${PROJECT_NAME})
+
 ament_package()
