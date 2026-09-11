@@ -1,6 +1,5 @@
 # 編排核心：publisher / backend / frontend 共用 bridge network。
-# 後續 1.6 補 volume / port / healthcheck。
-# DDS 變數名稱與 .env.example 鎖定；兩端必須相同。複製 .env.example 為 .env 可覆寫。
+# 變數名稱與 .env.example 鎖定。複製 .env.example 為 .env 可覆寫。
 
 services:
   publisher:
@@ -9,6 +8,10 @@ services:
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
       RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
+      GPS_CSV_PATH: ${GPS_CSV_PATH:-/data/path_data.csv}
+      PUBLISH_RATE_HZ: ${PUBLISH_RATE_HZ:-5}
+    volumes:
+      - ./data:/data:ro
     networks:
       - ros2
 
@@ -18,12 +21,31 @@ services:
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
       RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     networks:
       - ros2
 
   frontend:
     build:
       context: ./frontend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
     networks:
       - ros2
 
