@@ -2,7 +2,6 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -20,6 +19,17 @@ public:
   GpsPublisherNode()
   : Node("gps_publisher")
   {
+    ok_ = setup();
+  }
+
+  bool ok() const
+  {
+    return ok_;
+  }
+
+private:
+  bool setup()
+  {
     this->declare_parameter<std::string>("csv_path", "/data/path_data.csv");
     this->declare_parameter<double>("publish_rate_hz", 5.0);
     this->declare_parameter<std::string>("frame_id", "gps_link");
@@ -31,16 +41,24 @@ public:
     loop_ = this->get_parameter("loop").as_bool();
 
     if (publish_rate_hz <= 0.0) {
-      throw std::runtime_error("publish_rate_hz must be > 0");
+      RCLCPP_FATAL(this->get_logger(), "publish_rate_hz must be > 0 (got %.3f)", publish_rate_hz);
+      return false;
+    }
+
+    try {
+      points_ = read_csv(csv_path);
+    } catch (const std::exception & e) {
+      RCLCPP_FATAL(this->get_logger(), "%s", e.what());
+      return false;
+    }
+
+    if (points_.empty()) {
+      RCLCPP_FATAL(this->get_logger(), "CSV has no data points: %s", csv_path.c_str());
+      return false;
     }
 
     publisher_ = this->create_publisher<sensor_msgs::msg::NavSatFix>(
       "/gps/fix", rclcpp::SensorDataQoS());
-
-    points_ = read_csv(csv_path);
-    if (points_.empty()) {
-      throw std::runtime_error("CSV has no data points: " + csv_path);
-    }
 
     const auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::duration<double>(1.0 / publish_rate_hz));
@@ -51,9 +69,9 @@ public:
       "Publishing %zu points from %s on /gps/fix at %.3f Hz (frame_id=%s loop=%s)",
       points_.size(), csv_path.c_str(), publish_rate_hz, frame_id_.c_str(),
       loop_ ? "true" : "false");
+    return true;
   }
 
-private:
   void on_timer()
   {
     if (index_ >= points_.size()) {
@@ -84,6 +102,7 @@ private:
     ++index_;
   }
 
+  bool ok_{false};
   rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
   std::vector<GpsPoint> points_;
@@ -98,7 +117,12 @@ private:
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<gps_publisher::GpsPublisherNode>());
+  const auto node = std::make_shared<gps_publisher::GpsPublisherNode>();
+  if (!node->ok()) {
+    rclcpp::shutdown();
+    return 1;
+  }
+  rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;
 }
