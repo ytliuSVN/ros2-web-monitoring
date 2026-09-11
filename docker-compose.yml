@@ -1,16 +1,23 @@
 # 編排核心：publisher / backend / frontend 共用 bridge network。
-# 後續 1.5 補 DDS 環境變數；1.6 補 volume / port / healthcheck。
+# 後續 1.6 補 volume / port / healthcheck。
+# DDS 變數名稱與 .env.example 鎖定；兩端必須相同。複製 .env.example 為 .env 可覆寫。
 
 services:
   publisher:
     build:
       context: ./ros2_ws
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+      RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
     networks:
       - ros2
 
   backend:
     build:
       context: ./backend
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+      RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
     networks:
       - ros2
 
