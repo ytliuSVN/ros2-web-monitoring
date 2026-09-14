@@ -2,6 +2,8 @@
 
 將 ROS 2 模擬產生的 GNSS 數據，經由 FastAPI 橋接器即時推送至 Vue 3 儀表板，並在地圖上繪製無人載具的即時位置與歷史路徑。
 
+開發計畫見 [PLAN_MVP.md](PLAN_MVP.md)。
+
 ---
 
 ## 架構
@@ -210,5 +212,6 @@ ros2-web-monitoring/
 ├── docker-compose.yml
 ├── .env.example
 ├── PLAN.md
+├── PLAN_MVP.md
 └── README.md
 ```
