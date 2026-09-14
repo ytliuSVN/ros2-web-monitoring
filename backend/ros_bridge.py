@@ -1,7 +1,10 @@
 """訂閱 /gps/fix 的 rclpy 節點，QoS 對齊 Publisher 的 SensorDataQoS。"""
 
-from collections.abc import Callable
+import asyncio
+import threading
+from concurrent.futures import Future
 
+from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import (
     DurabilityPolicy,
@@ -27,11 +30,17 @@ SENSOR_DATA_QOS = QoSProfile(
 class GpsRosBridge(Node):
     def __init__(
         self,
-        on_message: Callable[[NavSatFix], None] | None = None,
+        loop: asyncio.AbstractEventLoop,
+        queue: asyncio.Queue[NavSatFix] | None = None,
     ) -> None:
         super().__init__("gps_ros_bridge")
-        self._on_message = on_message
+        self._loop = loop
+        self._queue: asyncio.Queue[NavSatFix] = (
+            queue if queue is not None else asyncio.Queue()
+        )
         self._last_msg: NavSatFix | None = None
+        self._spin_thread: threading.Thread | None = None
+        self._spin_executor: SingleThreadedExecutor | None = None
         self._subscription = self.create_subscription(
             NavSatFix,
             GPS_FIX_TOPIC,
@@ -45,6 +54,10 @@ class GpsRosBridge(Node):
         )
 
     @property
+    def queue(self) -> asyncio.Queue[NavSatFix]:
+        return self._queue
+
+    @property
     def last_msg(self) -> NavSatFix | None:
         return self._last_msg
 
@@ -53,10 +66,53 @@ class GpsRosBridge(Node):
         """曾收到至少一筆 /gps/fix；Publisher 未啟動時為 False。"""
         return self._last_msg is not None
 
+    def start(self) -> None:
+        """在獨立 thread 執行 spin，避免阻塞 FastAPI event loop。"""
+        if self._spin_thread is not None and self._spin_thread.is_alive():
+            return
+        self._spin_executor = SingleThreadedExecutor()
+        self._spin_executor.add_node(self)
+        self._spin_thread = threading.Thread(
+            target=self._spin,
+            name="rclpy-spin",
+            daemon=True,
+        )
+        self._spin_thread.start()
+        self.get_logger().info("rclpy spin thread started")
+
+    def stop(self) -> None:
+        """停止 spin thread。不呼叫 rclpy.shutdown()（由 FastAPI lifespan 負責）。"""
+        if self._spin_executor is not None:
+            self._spin_executor.shutdown()
+            self._spin_executor = None
+        if self._spin_thread is not None:
+            self._spin_thread.join(timeout=5.0)
+            if self._spin_thread.is_alive():
+                self.get_logger().warning("rclpy spin thread did not stop within 5s")
+            self._spin_thread = None
+
+    def _spin(self) -> None:
+        # Humble 的 rclpy.spin() 只看 context.ok()，必須 rclpy.shutdown() 才會返回，
+        # 會與 FastAPI lifespan 搶關機。Executor.spin() 同樣在獨立 thread 阻塞處理
+        # callback，但 stop() 可只關 executor。
+        assert self._spin_executor is not None
+        self._spin_executor.spin()
+
     def _on_fix(self, msg: NavSatFix) -> None:
         self._last_msg = msg
-        if self._on_message is not None:
-            self._on_message(msg)
+        try:
+            future = asyncio.run_coroutine_threadsafe(self._queue.put(msg), self._loop)
+        except RuntimeError as exc:
+            self.get_logger().warning("Event loop closed; dropping GPS fix: %s", exc)
+            return
+        future.add_done_callback(self._on_enqueue_done)
+
+    def _on_enqueue_done(self, future: Future[None]) -> None:
+        if future.cancelled():
+            return
+        exc = future.exception()
+        if exc is not None:
+            self.get_logger().error("Failed to enqueue /gps/fix: %s", exc)
 
 
 # 明確標出 QoS 語意，避免日後誤改成 RELIABLE 預設而訂閱不到。
