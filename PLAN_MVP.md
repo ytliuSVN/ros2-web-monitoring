@@ -260,7 +260,6 @@ ros2-web-monitoring/
 - `docker compose up publisher backend` 後，`GET http://localhost:8000/health` 回 `ros_connected: true`
 - `ws://localhost:8000/ws/gps` 可持續收到 JSON，欄位與契約一致，`timestamp` 來自 ROS `header.stamp`
 - Publisher 未啟動時 health 仍 200、`ros_connected: false`，WebSocket 可連且不丟例外
-- 不必本機裝 `websocat`；瀏覽器 DevTools 或 `curl` 即可
 
 ---
 
