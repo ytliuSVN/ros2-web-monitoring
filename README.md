@@ -2,8 +2,6 @@
 
 將 ROS 2 模擬產生的 GNSS 數據，經由 FastAPI 橋接器即時推送至 Vue 3 儀表板，並在地圖上繪製無人載具的即時位置與歷史路徑。
 
-本文件為跨子專案的介面契約。Topic 名稱、QoS、WebSocket 路徑、JSON 欄位與環境變數名稱一經鎖定，後續 Phase 不再更名。
-
 ---
 
 ## 架構
@@ -20,14 +18,76 @@ path_data.csv   rclcpp NavSatFix        FastAPI JSON         Vue 3 + Leaflet
 | Frontend | Vue 3 + Vite + Leaflet | 連線、繪製 Marker 與歷史路徑 |
 | 部署 | Docker Compose | 三個獨立鏡像，共用 bridge network |
 
-一鍵啟動（Phase 4 完成後生效）：
+---
+
+## 安裝與啟動
+
+建議用 Docker Compose 一次帶起 publisher、backend、frontend。ROS 2 Humble 只存在於容器內，**本機不必安裝 Humble**（macOS / Apple Silicon 亦同）。
+
+### 方式一：Docker Compose（建議）
+
+第一次會建置三個鏡像，約需數分鐘：
 
 ```bash
-cp .env.example .env
 docker compose up --build
 ```
 
-瀏覽器開啟 `http://localhost:8080`。本機前端開發則為 `http://localhost:5173`。
+啟動完成後：
+
+| 服務 | 位址 | 說明 |
+| :--- | :--- | :--- |
+| 儀表板 | [http://localhost:8080](http://localhost:8080) | Nginx 提供的 Vue SPA；地圖應出現移動中的 Marker 與路徑 |
+| Backend API | [http://localhost:8000/health](http://localhost:8000/health) | `ros_connected` 應為 `true` |
+| WebSocket | `ws://localhost:8080/ws/gps` | 瀏覽器走同源；Nginx 反代到 backend `:8000` |
+
+背景執行：
+
+```bash
+docker compose up --build -d
+docker compose logs -f
+```
+
+停止並移除容器：
+
+```bash
+docker compose down
+```
+
+### 驗證
+
+```bash
+curl -s http://localhost:8000/health
+```
+
+預期類似：
+
+```json
+{
+  "status": "ok",
+  "ros_connected": true,
+  "last_message_time": 1757423401.234
+}
+```
+
+`ros_connected` 為 `false` 時，多半是 publisher 尚未發佈 `/gps/fix`。可用 `docker compose logs -f publisher` 檢查 CSV 路徑與節點輸出。
+
+### 方式二：本機前端開發（backend / publisher 仍用 Docker）
+
+適合改 Vue 儀表板時熱重載。先讓 ROS 與橋接器在容器裡跑：
+
+```bash
+docker compose up --build publisher backend
+```
+
+另開一個終端：
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+瀏覽器開啟 [http://localhost:5173](http://localhost:5173)。Vite 會把 `/ws` 代理到 `ws://localhost:8000`，因此不必填 `VITE_WS_URL`。
 
 ---
 
