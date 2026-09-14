@@ -48,9 +48,7 @@ class GpsRosBridge(Node):
             SENSOR_DATA_QOS,
         )
         self.get_logger().info(
-            "Subscribed to %s (BEST_EFFORT, depth %d)",
-            GPS_FIX_TOPIC,
-            SENSOR_DATA_QOS.depth,
+            f"Subscribed to {GPS_FIX_TOPIC} (BEST_EFFORT, depth {SENSOR_DATA_QOS.depth})"
         )
 
     @property
@@ -103,7 +101,9 @@ class GpsRosBridge(Node):
         try:
             future = asyncio.run_coroutine_threadsafe(self._queue.put(msg), self._loop)
         except RuntimeError as exc:
-            self.get_logger().warning("Event loop closed; dropping GPS fix: %s", exc)
+            self.get_logger().warning(
+                f"Event loop closed; dropping GPS fix: {exc}"
+            )
             return
         future.add_done_callback(self._on_enqueue_done)
 
@@ -112,7 +112,7 @@ class GpsRosBridge(Node):
             return
         exc = future.exception()
         if exc is not None:
-            self.get_logger().error("Failed to enqueue /gps/fix: %s", exc)
+            self.get_logger().error(f"Failed to enqueue /gps/fix: {exc}")
 
 
 # 明確標出 QoS 語意，避免日後誤改成 RELIABLE 預設而訂閱不到。
