@@ -5,8 +5,9 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Production 瀏覽器連同源 Nginx（:8080），再反代到 backend:8000。
-ARG VITE_WS_URL=ws://localhost:8080/ws/gps
+# 留空時前端自行用同源位址，由 Nginx 的 /ws 反代到 backend:8000；
+# 需要指向別的位址時再從 compose 帶入。
+ARG VITE_WS_URL=
 ENV VITE_WS_URL=$VITE_WS_URL
 
 COPY package.json package-lock.json ./
