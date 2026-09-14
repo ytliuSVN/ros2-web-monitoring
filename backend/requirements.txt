@@ -1,4 +1,5 @@
-# rclpy 來自 Humble base image，不要用 pip 安裝。
-fastapi
-uvicorn[standard]
-pydantic
+# Backend pip 依賴（Humble 容器內 Python 3.10）。
+# rclpy / sensor_msgs 來自 ROS 2 base image，禁止用 pip 安裝以免覆蓋系統套件。
+fastapi>=0.115.0,<1.0.0
+uvicorn[standard]>=0.32.0,<1.0.0
+pydantic>=2.9.0,<3.0.0
