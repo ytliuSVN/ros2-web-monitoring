@@ -173,6 +173,8 @@ Publisher 未啟動時：`GET /health` 仍回 200，`ros_connected` 為 `false`�
 
 [`data/path_data.csv`](data/path_data.csv)：高雄市區封閉環路，91 點，相鄰約 50 m。Publisher 索引到底後回到第一筆，接縫與一般點距相同。
 
+![Path shape](data/path_shape.svg)
+
 ```csv
 latitude,longitude
 22.627300,120.301400
@@ -209,6 +211,7 @@ ros2-web-monitoring/
 │   ├── nginx.conf
 │   └── Dockerfile
 ├── data/path_data.csv
+├── data/path_shape.svg
 ├── docker-compose.yml
 ├── .env.example
 ├── PLAN.md
