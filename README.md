@@ -210,8 +210,9 @@ ros2-web-monitoring/
 │   ├── src/
 │   ├── nginx.conf
 │   └── Dockerfile
-├── data/path_data.csv
-├── data/path_shape.svg
+├── data/
+│   ├── path_data.csv
+│   └── path_shape.svg
 ├── docker-compose.yml
 ├── .env.example
 ├── PLAN.md
