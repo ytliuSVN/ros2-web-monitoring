@@ -14,6 +14,7 @@
 4. [環境變數](#環境變數)
 5. [路徑資料](#路徑資料)
 6. [目錄結構](#目錄結構)
+7. [畫面預覽](#畫面預覽)
 
 ---
 
@@ -224,9 +225,21 @@ ros2-web-monitoring/
 ├── data/
 │   ├── path_data.csv
 │   └── path_shape.svg
+├── docs/
+│   ├── architecture.excalidraw
+│   ├── architecture.svg
+│   └── dashboard.png
 ├── docker-compose.yml
 ├── .env.example
 ├── PLAN.md
 ├── PLAN_MVP.md
 └── README.md
 ```
+
+---
+
+## 畫面預覽
+
+`docker compose up` 後開啟 [http://localhost:8080](http://localhost:8080)，已連線時地圖上的 Marker 會沿 CSV 路徑移動，並繪出歷史路徑。
+
+![儀表板](docs/dashboard.png)
