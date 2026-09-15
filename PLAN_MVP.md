@@ -23,8 +23,6 @@
 | :--- | :--- | :--- |
 | 開發機 | 假設本機有 Humble，可 `colcon build` | macOS 只當編輯器；Humble 只存在於容器 |
 | Phase 順序 | Publisher → Backend → Frontend → Docker | **Docker 空殼先鎖定環境** → Publisher → Backend → Frontend |
-| Phase 1 驗收 | 本機 `ros2 topic echo` / `topic hz` | `docker compose build publisher` 通過即可 |
-| Phase 5 | 測試、路徑簡化、Demo GIF | 整段不做 |
 
 驗收終點只有一件事：`docker compose up --build` 後，瀏覽器開 `http://localhost:8080`，地圖上的點沿 `path_data.csv` 移動並拖出軌跡。
 
