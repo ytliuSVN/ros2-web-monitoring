@@ -166,7 +166,7 @@ ros2-web-monitoring/
 
 ## Task Breakdown & Implementation Steps
 
-**Estimated effort: 5.5–7 hours.** Phases are ordered for a macOS host with Docker only; each phase should be independently demo-able **inside Docker**.
+**Estimated effort: 6–7.5 hours.** Phases are ordered for a macOS host with Docker only; each phase should be independently demo-able **inside Docker**.
 
 本機不執行 `colcon`、`ros2 topic echo`、`ros2 launch`。日常指令只有 `docker compose build` / `docker compose up`。
 
@@ -176,11 +176,9 @@ ros2-web-monitoring/
 - [PLAN.md](PLAN.md) Phase 5：gtest、pytest、Douglas–Peucker、Demo GIF、韌性報告
 - Follow / Free 視角切換、Clear Track、行走距離
 
-**Phase 0 現況：已完成**（目錄、`path_data.csv`、ignore、`.env.example`、契約）。下方從 Phase 1 開始實作。
-
 ---
 
-### Phase 0 — Project Foundation（已完成）
+### Phase 0 — Project Foundation (~0.5 hr)
 
 | # | Task | Deliverable |
 | :-- | :--- | :--- |
@@ -190,7 +188,11 @@ ros2-web-monitoring/
 | 0.4 | 建立 `.env.example`：`ROS_DOMAIN_ID`、`GPS_CSV_PATH`、`PUBLISH_RATE_HZ`、`VITE_WS_URL` | 環境變數契約 |
 | 0.5 | 介面契約寫入 `README.md` 骨架 | 契約文件 |
 
-**Phase 0 acceptance criteria:** 已滿足，不重做。
+**Phase 0 acceptance criteria:**
+
+- `data/path_data.csv` 首行為 `latitude,longitude`，所有座標可在地圖上連成一條連續、不跳點的路線
+- 三個子專案目錄與環境變數命名一致，後續 Phase 無需再改動契約
+- `git status` 乾淨，不含任何建置產物
 
 ---
 
@@ -301,9 +303,9 @@ ros2-web-monitoring/
 
 | Phase | 內容 | 預估工時 | Demo 方式 |
 | :-- | :--- | :-- | :--- |
-| 0 | Project Foundation | —（已完成） | 目錄結構 + `path_data.csv` |
+| 0 | Project Foundation | 0.5 hr | 目錄結構 + `path_data.csv` |
 | 1 | Containerization Shell | 1 hr | `docker compose config` |
 | 2 | GNSS Publisher (ROS 2) | 2 hr | `docker compose build publisher` |
 | 3 | Backend Bridge (FastAPI) | 1.5–2 hr | `GET /health` + `/ws/gps` JSON |
 | 4 | Frontend + Compose 驗收 | 1.5–2 hr | `docker compose up --build` → `:8080` 地圖 |
-| — | **合計** | **5.5–7 hr** | — |
+| — | **合計** | **6–7.5 hr** | — |
