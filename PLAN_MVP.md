@@ -1,6 +1,6 @@
 # PLAN_MVP — ROS 2 + Web 實時路徑監控系統
 
-> 輕量 MVP 計畫書：在 macOS 本機不安裝 ROS 2 Humble 的前提下，以 Docker 作為唯一建置／執行環境，完成「CSV → `/gps/fix` → WebSocket → 地圖軌跡」的最小可演示系統。
+> 輕量 MVP 計畫書：在 macOS 本機不安裝 ROS 2 Humble 的前提下，以 Docker 作為唯一建置與執行環境，完成「CSV → `/gps/fix` → WebSocket → 地圖軌跡」的最小可演示系統。
 >
 > 本文件是 [PLAN.md](PLAN.md) 的子集與重排，介面契約、技術選型、目錄結構與原計畫一致。
 
@@ -259,19 +259,19 @@ ros2-web-monitoring/
 
 ---
 
-### Phase 4 — Frontend View + End-to-end Demo (~1.5–2 hr)
+### Phase 4 — Frontend View + Demo (~1.5–2 hr)
 
 對應 [PLAN.md](PLAN.md) Phase 3 的核心畫面，加上整包 `docker compose up --build` 驗收。
 
 | # | Task | Deliverable |
 | :-- | :--- | :--- |
 | 4.1 | `npm create vite@latest`（vue-ts），安裝 `leaflet` 與 `@types/leaflet` | Vue 3 專案骨架 |
-| 4.2 | `types/gps.ts` + `useGpsSocket.ts`：連線、JSON 解析、指數退避重連、連線狀態 | 通訊層 |
+| 4.2 | `types/gps.ts` + `useGpsSocket.ts`：連線、JSON 解析、exponential backoff 重連、連線狀態 | 通訊層 |
 | 4.3 | `usePathTrack.ts`：累積 `LatLngTuple[]`、去重、最多保留最近 10000 點 | 路徑狀態 |
 | 4.4 | `MapView.vue`：OSM tile、`onUnmounted` 銷毀；Marker 隨座標更新；Polyline 增量繪製 | 地圖 |
 | 4.5 | `StatusBar.vue` / `TelemetryPanel.vue`：連線狀態與當前經緯度 | 儀表 |
 | 4.6 | `VITE_WS_URL` 環境變數化；production 由 nginx 反代 `/ws` | 連線設定 |
-| 4.7 | `docker compose up --build` 三服務一起跑，瀏覽器驗收 | 一鍵演示 |
+| 4.7 | `docker compose up --build` 三服務一起跑，瀏覽器驗收 | Compose 驗收 |
 
 **Phase 4 acceptance criteria:**
 
@@ -279,12 +279,6 @@ ros2-web-monitoring/
 - 瀏覽器開 `http://localhost:8080`：自動連線，Marker 約每 200 ms 更新，Polyline 形狀與 `path_data.csv` 相符
 - Backend 重啟後前端能自動重連並續繪
 - `docker compose logs` 無明顯 error；`docker compose down` 能乾淨移除
-
----
-
-### Phase 5 — Hardening, Tests & Demo
-
-不做。完整項目見 [PLAN.md](PLAN.md) Phase 5。
 
 ---
 
@@ -311,6 +305,5 @@ ros2-web-monitoring/
 | 1 | Containerization Shell | 1 hr | `docker compose config` |
 | 2 | GNSS Publisher (ROS 2) | 2 hr | `docker compose build publisher` |
 | 3 | Backend Bridge (FastAPI) | 1.5–2 hr | `GET /health` + `/ws/gps` JSON |
-| 4 | Frontend + 一鍵演示 | 1.5–2 hr | `docker compose up --build` → `:8080` 地圖 |
-| 5 | Hardening & Demo | 不做 | — |
+| 4 | Frontend + Compose 驗收 | 1.5–2 hr | `docker compose up --build` → `:8080` 地圖 |
 | — | **合計** | **5.5–7 hr** | — |
