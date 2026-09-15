@@ -10,6 +10,9 @@
 
 ![架構](docs/architecture.svg)
 
+
+各層職責如下：
+
 | 層級 | 技術 | 責任 |
 | :--- | :--- | :--- |
 | Publisher | ROS 2 Humble + C++ (`rclcpp`) | 讀 CSV，以 5 Hz 循環發佈 `NavSatFix` |

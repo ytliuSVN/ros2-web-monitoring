@@ -106,7 +106,7 @@
       "version": 81,
       "versionNonce": 2109528369,
       "isDeleted": false,
-      "boundElements": null,
+      "boundElements": [],
       "updated": 1789478960047,
       "link": null,
       "locked": false,
@@ -193,101 +193,6 @@
       "locked": false,
       "type": "rectangle",
       "index": "a7"
-    },
-    {
-      "id": "T1ogmMJXwKi9",
-      "x": 344.3014403251356,
-      "y": 272.6399259981457,
-      "width": 119.76720719255593,
-      "height": 0.8463504241257169,
-      "angle": 0,
-      "strokeColor": "#1e1e1e",
-      "backgroundColor": "transparent",
-      "fillStyle": "hachure",
-      "strokeWidth": 2,
-      "strokeStyle": "solid",
-      "roughness": 1,
-      "opacity": 100,
-      "groupIds": [],
-      "frameId": null,
-      "roundness": {
-        "type": 2
-      },
-      "seed": 1672087624,
-      "version": 765,
-      "versionNonce": 2025111377,
-      "isDeleted": false,
-      "boundElements": [
-        {
-          "id": "h6AmUfBH7X41",
-          "type": "text"
-        }
-      ],
-      "updated": 1789479000377,
-      "link": null,
-      "locked": false,
-      "type": "arrow",
-      "points": [
-        [
-          0,
-          0
-        ],
-        [
-          119.76720719255593,
-          -0.8463504241257169
-        ]
-      ],
-      "lastCommittedPoint": null,
-      "startBinding": {
-        "elementId": "H6XxAcXIk-qN6zHan--54",
-        "focus": -0.06947154162522372,
-        "gap": 9.484817061246702
-      },
-      "endBinding": {
-        "elementId": "S1on43XkMtEC",
-        "focus": -0.01932744684297511,
-        "gap": 19.375546164520983
-      },
-      "startArrowhead": null,
-      "endArrowhead": "arrow",
-      "index": "aG"
-    },
-    {
-      "id": "h6AmUfBH7X41",
-      "x": 358.8524208530322,
-      "y": 254.7761781311649,
-      "width": 62.74798583984375,
-      "height": 35,
-      "angle": 0,
-      "strokeColor": "#1e1e1e",
-      "backgroundColor": "transparent",
-      "fillStyle": "solid",
-      "strokeWidth": 1,
-      "strokeStyle": "solid",
-      "roughness": 1,
-      "opacity": 100,
-      "groupIds": [],
-      "frameId": null,
-      "roundness": null,
-      "seed": 1732535703,
-      "version": 17,
-      "versionNonce": 1084156479,
-      "isDeleted": false,
-      "boundElements": [],
-      "updated": 1789478933724,
-      "link": null,
-      "locked": false,
-      "type": "text",
-      "text": "5 Hz",
-      "originalText": "5 Hz",
-      "fontSize": 28,
-      "fontFamily": 1,
-      "textAlign": "center",
-      "verticalAlign": "top",
-      "containerId": "T1ogmMJXwKi9",
-      "autoResize": true,
-      "lineHeight": 1.25,
-      "index": "aH"
     },
     {
       "id": "PDP4k8FFuf0E",
@@ -478,6 +383,101 @@
       "autoResize": true,
       "lineHeight": 1.25,
       "index": "aL"
+    },
+    {
+      "id": "T1ogmMJXwKi9",
+      "x": 344.3014403251356,
+      "y": 272.6399259981457,
+      "width": 119.76720719255593,
+      "height": 0.8463504241257169,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "hachure",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 2
+      },
+      "seed": 1672087624,
+      "version": 767,
+      "versionNonce": 1542118436,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "h6AmUfBH7X41",
+          "type": "text"
+        }
+      ],
+      "updated": 1789479724634,
+      "link": null,
+      "locked": false,
+      "type": "arrow",
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          119.76720719255593,
+          -0.8463504241257169
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "H6XxAcXIk-qN6zHan--54",
+        "focus": -0.06947154162522372,
+        "gap": 9.484817061246702
+      },
+      "endBinding": {
+        "elementId": "S1on43XkMtEC",
+        "focus": -0.01932744684297511,
+        "gap": 19.375546164520983
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "index": "aLV"
+    },
+    {
+      "id": "h6AmUfBH7X41",
+      "x": 358.8524208530322,
+      "y": 254.7761781311649,
+      "width": 62.74798583984375,
+      "height": 35,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": null,
+      "seed": 1732535703,
+      "version": 19,
+      "versionNonce": 1373333532,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1789479724634,
+      "link": null,
+      "locked": false,
+      "type": "text",
+      "text": "5 Hz",
+      "originalText": "5 Hz",
+      "fontSize": 28,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "top",
+      "containerId": "T1ogmMJXwKi9",
+      "autoResize": true,
+      "lineHeight": 1.25,
+      "index": "aM"
     },
     {
       "id": "H6XxAcXIk-qN6zHan--54",
@@ -838,7 +838,7 @@
       "version": 228,
       "versionNonce": 120499583,
       "isDeleted": false,
-      "boundElements": null,
+      "boundElements": [],
       "updated": 1789478837069,
       "link": null,
       "locked": false,
@@ -849,6 +849,36 @@
         1
       ],
       "crop": null
+    },
+    {
+      "id": "drj5yqGipgPoxYs5G3pnd",
+      "type": "rectangle",
+      "x": 397.5410615009372,
+      "y": 89.89355468749986,
+      "width": 1047.5664062500002,
+      "height": 428.73437500000006,
+      "angle": 0,
+      "strokeColor": "#f08c00",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "aeV",
+      "roundness": {
+        "type": 3
+      },
+      "seed": 451514012,
+      "version": 374,
+      "versionNonce": 339884444,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1789479819197,
+      "link": null,
+      "locked": false
     },
     {
       "id": "ymAPhqdrsiSpOmFTawmct",
@@ -873,7 +903,7 @@
       "version": 305,
       "versionNonce": 644490513,
       "isDeleted": false,
-      "boundElements": null,
+      "boundElements": [],
       "updated": 1789478992421,
       "link": null,
       "locked": false,
@@ -908,7 +938,7 @@
       "version": 163,
       "versionNonce": 930983199,
       "isDeleted": false,
-      "boundElements": null,
+      "boundElements": [],
       "updated": 1789478831637,
       "link": null,
       "locked": false,
@@ -943,7 +973,7 @@
       "version": 229,
       "versionNonce": 1753428095,
       "isDeleted": false,
-      "boundElements": null,
+      "boundElements": [],
       "updated": 1789478992421,
       "link": null,
       "locked": false,
@@ -954,6 +984,43 @@
         1
       ],
       "crop": null
+    },
+    {
+      "id": "TAcVoFqmi9eS9SF4x6j1A",
+      "type": "text",
+      "x": 728.7543793720312,
+      "y": 482.4521484374999,
+      "width": 385.1397705078125,
+      "height": 25,
+      "angle": 0,
+      "strokeColor": "#f08c00",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "ai",
+      "roundness": null,
+      "seed": 722390044,
+      "version": 182,
+      "versionNonce": 107640228,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1789479822868,
+      "link": null,
+      "locked": false,
+      "text": "Docker Compose  ·  共用 bridge network",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "left",
+      "verticalAlign": "top",
+      "containerId": null,
+      "originalText": "Docker Compose  ·  共用 bridge network",
+      "autoResize": true,
+      "lineHeight": 1.25
     }
   ],
   "appState": {
