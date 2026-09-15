@@ -2,7 +2,7 @@
 
 > 輕量 MVP 計畫書：在 macOS 本機不安裝 ROS 2 Humble 的前提下，以 Docker 作為唯一建置／執行環境，完成「CSV → `/gps/fix` → WebSocket → 地圖軌跡」的最小可演示系統。
 >
-> 本文件是 [PLAN.md](PLAN.md) 的子集與重排，不是另一套架構。介面契約、技術選型、目錄結構與原計畫一致；本輪**不改** [README.md](README.md)。
+> 本文件是 [PLAN.md](PLAN.md) 的子集與重排，介面契約、技術選型、目錄結構與原計畫一致。
 
 ---
 
@@ -17,15 +17,14 @@
 
 ## Architecture at a Glance
 
-### 與 PLAN.md 的差異（只改做法，不改產品）
+### 與 PLAN.md 的差異
 
 | 項目 | PLAN.md | 本 MVP |
 | :--- | :--- | :--- |
 | 開發機 | 假設本機有 Humble，可 `colcon build` | macOS 只當編輯器；Humble 只存在於容器 |
 | Phase 順序 | Publisher → Backend → Frontend → Docker | **Docker 空殼先鎖定環境** → Publisher → Backend → Frontend |
 | Phase 1 驗收 | 本機 `ros2 topic echo` / `topic hz` | `docker compose build publisher` 通過即可 |
-| Phase 5 | 測試、路徑簡化、Demo GIF | **整段不做** |
-| README | Phase 4 一併更新啟動說明 | **本輪不改** |
+| Phase 5 | 測試、路徑簡化、Demo GIF | 整段不做 |
 
 驗收終點只有一件事：`docker compose up --build` 後，瀏覽器開 `http://localhost:8080`，地圖上的點沿 `path_data.csv` 移動並拖出軌跡。
 
@@ -86,8 +85,6 @@ flowchart TB
 
 ### 介面契約（Interface Contract）
 
-與 [README.md](README.md) / [PLAN.md](PLAN.md) 鎖定內容相同，本輪不更名、不改欄位。
-
 | 介面 | 位址 / 名稱 | 格式 |
 | :--- | :--- | :--- |
 | ROS 2 Topic | `/gps/fix` | `sensor_msgs/msg/NavSatFix`（QoS: `SensorDataQoS`, depth 10）|
@@ -119,7 +116,7 @@ ros2-web-monitoring/
 │   │       ├── src/
 │   │       │   └── gps_publisher_node.cpp    # 讀 CSV、5Hz 循環發佈 NavSatFix
 │   │       ├── include/gps_publisher/
-│   │       │   └── csv_reader.hpp            # CSV 解析（MVP 不做 gtest）
+│   │       │   └── csv_reader.hpp            # CSV 解析
 │   │       ├── launch/
 │   │       │   └── gps_publisher.launch.py   # 參數化 csv_path / publish_rate
 │   │       ├── config/
@@ -142,8 +139,8 @@ ros2-web-monitoring/
 │   │   ├── App.vue
 │   │   ├── components/
 │   │   │   ├── MapView.vue           # Leaflet 地圖、Marker、Polyline
-│   │   │   ├── StatusBar.vue         # 連線狀態（極簡）
-│   │   │   └── TelemetryPanel.vue    # 當前經緯度（極簡）
+│   │   │   ├── StatusBar.vue         # 連線狀態
+│   │   │   └── TelemetryPanel.vue    # 當前經緯度
 │   │   ├── composables/
 │   │   │   ├── useGpsSocket.ts       # WebSocket 連線 + 自動重連
 │   │   │   └── usePathTrack.ts       # 路徑點累積、去重與點數上限
@@ -155,14 +152,14 @@ ros2-web-monitoring/
 │   └── Dockerfile                    # multi-stage: node build → nginx
 │
 ├── data/
-│   └── path_data.csv                 # 已存在：latitude,longitude 路徑點
+│   └── path_data.csv                 # latitude,longitude 路徑點
 │
 ├── docker-compose.yml                # 整體編排核心（含 network / volume）
-├── .env.example                      # 已存在；本輪不更名
+├── .env.example                      # ROS_DOMAIN_ID / GPS_CSV_PATH / PUBLISH_RATE_HZ / VITE_WS_URL
 ├── .dockerignore
-├── PLAN.md                           # 完整計畫（保留，不覆寫）
+├── PLAN.md                           # 完整計畫
 ├── PLAN_MVP.md                       # 本文件
-└── README.md                         # 本輪不改動
+└── README.md
 ```
 
 ---
@@ -173,12 +170,11 @@ ros2-web-monitoring/
 
 本機不執行 `colcon`、`ros2 topic echo`、`ros2 launch`。日常指令只有 `docker compose build` / `docker compose up`。
 
-**刻意不做（Out of scope）**
+**Out of scope**
 
 - 本機安裝 ROS 2 Humble / colcon
 - [PLAN.md](PLAN.md) Phase 5：gtest、pytest、Douglas–Peucker、Demo GIF、韌性報告
-- 更新 README.md
-- Follow / Free 視角切換、Clear Track、行走距離（非演示必要）
+- Follow / Free 視角切換、Clear Track、行走距離
 
 **Phase 0 現況：已完成**（目錄、`path_data.csv`、ignore、`.env.example`、契約）。下方從 Phase 1 開始實作。
 
@@ -192,7 +188,7 @@ ros2-web-monitoring/
 | 0.2 | 產出 `data/path_data.csv`：≥ 50 筆遞增的 `latitude,longitude`（高雄市區路線） | GPS 路徑資料 |
 | 0.3 | 建立 `.gitignore`、`.dockerignore` | 版控與建置忽略規則 |
 | 0.4 | 建立 `.env.example`：`ROS_DOMAIN_ID`、`GPS_CSV_PATH`、`PUBLISH_RATE_HZ`、`VITE_WS_URL` | 環境變數契約 |
-| 0.5 | 介面契約已寫入 `README.md` 骨架 | 契約文件（本輪不再改 README） |
+| 0.5 | 介面契約寫入 `README.md` 骨架 | 契約文件 |
 
 **Phase 0 acceptance criteria:** 已滿足，不重做。
 
@@ -200,7 +196,7 @@ ros2-web-monitoring/
 
 ### Phase 1 — Containerization Shell（先鎖定執行環境）(~1 hr)
 
-對應 [PLAN.md](PLAN.md) Phase 4 的編排部分，但**提前到寫應用程式之前**。此時原始碼尚未齊全，`docker compose up` 允許失敗；先把 base image、網路、環境變數、volume、埠口定死。
+對應 [PLAN.md](PLAN.md) Phase 4 的編排部分，但提前到寫應用程式之前。此時原始碼尚未齊全，`docker compose up` 允許失敗；先把 base image、網路、環境變數、volume、埠口定死。
 
 | # | Task | Deliverable |
 | :-- | :--- | :--- |
@@ -221,7 +217,7 @@ ros2-web-monitoring/
 
 ### Phase 2 — GNSS Publisher (ROS 2 C++) (~2 hr)
 
-對應 [PLAN.md](PLAN.md) Phase 1，但 **build / 跑都在 `publisher` 容器內**。不做 `ament_cmake_gtest`。
+對應 [PLAN.md](PLAN.md) Phase 1，build / 跑都在 `publisher` 容器內。
 
 | # | Task | Deliverable |
 | :-- | :--- | :--- |
@@ -243,7 +239,7 @@ ros2-web-monitoring/
 
 ### Phase 3 — Backend Bridge (FastAPI) (~1.5–2 hr)
 
-對應 [PLAN.md](PLAN.md) Phase 2。不做 pytest。Health 與 ring buffer 保留，因為契約已鎖定。
+對應 [PLAN.md](PLAN.md) Phase 2。
 
 | # | Task | Deliverable |
 | :-- | :--- | :--- |
@@ -265,7 +261,7 @@ ros2-web-monitoring/
 
 ### Phase 4 — Frontend View + End-to-end Demo (~1.5–2 hr)
 
-對應 [PLAN.md](PLAN.md) Phase 3 的核心畫面，加上整包 `docker compose up --build` 驗收。砍掉非演示必要的操作控制。
+對應 [PLAN.md](PLAN.md) Phase 3 的核心畫面，加上整包 `docker compose up --build` 驗收。
 
 | # | Task | Deliverable |
 | :-- | :--- | :--- |
@@ -273,7 +269,7 @@ ros2-web-monitoring/
 | 4.2 | `types/gps.ts` + `useGpsSocket.ts`：連線、JSON 解析、指數退避重連、連線狀態 | 通訊層 |
 | 4.3 | `usePathTrack.ts`：累積 `LatLngTuple[]`、去重、最多保留最近 10000 點 | 路徑狀態 |
 | 4.4 | `MapView.vue`：OSM tile、`onUnmounted` 銷毀；Marker 隨座標更新；Polyline 增量繪製 | 地圖 |
-| 4.5 | `StatusBar.vue` / `TelemetryPanel.vue`：連線狀態與當前經緯度（不做距離、Follow/Free、Clear Track） | 極簡儀表 |
+| 4.5 | `StatusBar.vue` / `TelemetryPanel.vue`：連線狀態與當前經緯度 | 儀表 |
 | 4.6 | `VITE_WS_URL` 環境變數化；production 由 nginx 反代 `/ws` | 連線設定 |
 | 4.7 | `docker compose up --build` 三服務一起跑，瀏覽器驗收 | 一鍵演示 |
 
@@ -281,15 +277,14 @@ ros2-web-monitoring/
 
 - `docker compose up --build` 無需額外手動設定即可運作
 - 瀏覽器開 `http://localhost:8080`：自動連線，Marker 約每 200 ms 更新，Polyline 形狀與 `path_data.csv` 相符
-- Backend 重啟後前端能自動重連並續繪（指數退避已做即可，不做正式韌性報告）
+- Backend 重啟後前端能自動重連並續繪
 - `docker compose logs` 無明顯 error；`docker compose down` 能乾淨移除
-- **不更新 README.md**
 
 ---
 
 ### Phase 5 — Hardening, Tests & Demo
 
-**不做。** 完整項目見 [PLAN.md](PLAN.md) Phase 5，本 MVP 明確排除。
+不做。完整項目見 [PLAN.md](PLAN.md) Phase 5。
 
 ---
 
@@ -301,7 +296,7 @@ ros2-web-monitoring/
 | `rclpy.spin()` 阻塞 FastAPI event loop | WebSocket 停止推播 | Subscriber 跑在獨立 thread，以 `run_coroutine_threadsafe` 回拋 |
 | Publisher 先啟動、Backend 尚未 ready | 前端初始畫面空白 | Backend ring buffer 補送歷史點 + `healthcheck` 控制啟動順序 |
 | QoS 不匹配（Sensor vs Default） | 訂閱不到訊息 | 兩端一律使用 `SensorDataQoS`（BEST_EFFORT / depth 10）|
-| 前端路徑點無上限累積 | 瀏覽器記憶體膨脹 | `usePathTrack` 只保留最近 10000 點（不做 Douglas–Peucker）|
+| 前端路徑點無上限累積 | 瀏覽器記憶體膨脹 | `usePathTrack` 只保留最近 10000 點 |
 | macOS 無 Humble，誤在本機 `colcon` | Phase 卡住 | 本機不裝 ROS；所有 build/run 走 Docker |
 | Apple Silicon 拉到 amd64 Humble image | `colcon build` 極慢或失敗 | 優先 `linux/arm64`；必要時再 `--platform linux/amd64` |
 | Phase 1 先寫 Dockerfile、原始碼尚未存在 | 過早 `compose up` 失敗 | Phase 1 只驗 `docker compose config`；build 成功列為 Phase 2–4 的驗收 |
