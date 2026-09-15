@@ -8,10 +8,7 @@
 
 ## 架構
 
-```
-CSV ──5 Hz──► Publisher ──/gps/fix──► Backend ──/ws/gps──► Frontend
-path_data.csv   rclcpp NavSatFix        FastAPI JSON         Vue 3 + Leaflet
-```
+![架構](docs/architecture.svg)
 
 | 層級 | 技術 | 責任 |
 | :--- | :--- | :--- |
