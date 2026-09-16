@@ -46,7 +46,10 @@ function sync() {
 }
 
 onMounted(() => {
-  map = L.map(container.value!, { dragging: false }).setView(DEFAULT_CENTER, DEFAULT_ZOOM)
+  map = L.map(container.value!, { dragging: false, scrollWheelZoom: false }).setView(
+    DEFAULT_CENTER,
+    DEFAULT_ZOOM,
+  )
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors',
     maxZoom: 19,
