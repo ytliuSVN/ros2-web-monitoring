@@ -20,18 +20,38 @@ Code Freeze 後只做一次 `docker.build`，正式 Release 以這份映像為�
 
 ```mermaid
 flowchart TD
-    build[Build] --> test[Test]
-    test --> dev[Deploy DEV]
-    dev --> qa[Deploy QA]
-    qa --> freeze["Code Freeze / Release Candidate（RC）"]
-    freeze --> docker["docker.build<br/>Build once · my-app:rc-tag"]
-    docker --> staging["Deploy Staging · 同一映像"]
-    staging --> uat["Deploy UAT · 同一映像"]
-    uat --> approval1{"Approval #1<br/>Deploy Canary?"}
-    approval1 --> canary["Canary Deploy · 同一映像"]
-    canary --> monitor["Monitor / Test"]
-    monitor --> approval2{"Approval #2<br/>Deploy to PRD?"}
-    approval2 --> prd["PRD Full Deploy · Promotion，同一映像"]
+    subgraph ci["持續整合"]
+        direction LR
+        build[Build] --> test[Test]
+    end
+
+    subgraph devqa["開發與測試環境"]
+        direction LR
+        dev[Deploy DEV] --> qa[Deploy QA]
+    end
+
+    subgraph rc["Code Freeze / Release Candidate（RC）"]
+        direction LR
+        freeze[Code Freeze] --> docker["docker.build<br/>Build once · my-app:rc-tag"]
+    end
+
+    subgraph preprod["驗證環境 · 同一映像"]
+        direction LR
+        staging[Deploy Staging] --> uat[Deploy UAT]
+    end
+
+    subgraph release["正式發布 · 同一映像 Promotion"]
+        direction LR
+        approval1{"Approval #1<br/>Deploy Canary?"} --> canary[Canary Deploy]
+        canary --> monitor["Monitor / Test"]
+        monitor --> approval2{"Approval #2<br/>Deploy to PRD?"}
+        approval2 --> prd[PRD Full Deploy]
+    end
+
+    ci --> devqa
+    devqa --> rc
+    rc --> preprod
+    preprod --> release
 ```
 
 ## Code Freeze
