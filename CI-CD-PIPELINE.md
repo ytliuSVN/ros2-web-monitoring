@@ -14,6 +14,8 @@
 
 ## 簡介
 
+![CI/CD 高層架構](docs/ci-cd-architecture.svg)
+
 ## 工具與技術
 
 - 版本控制與協作（Git、GitHub）
