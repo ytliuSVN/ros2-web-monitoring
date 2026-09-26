@@ -52,6 +52,28 @@ flowchart TD
     devqa --> rc
     rc --> preprod
     preprod --> release
+
+    classDef ciNode fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef devqaNode fill:#a5f3fc,stroke:#0891b2,color:#164e63
+    classDef rcNode fill:#fde68a,stroke:#d97706,color:#78350f
+    classDef preprodNode fill:#ddd6fe,stroke:#7c3aed,color:#4c1d95
+    classDef releaseNode fill:#bbf7d0,stroke:#16a34a,color:#14532d
+    classDef approvalNode fill:#fecaca,stroke:#dc2626,color:#7f1d1d
+    classDef prdNode fill:#16a34a,stroke:#14532d,color:#ffffff,stroke-width:2px
+
+    class build,test ciNode
+    class dev,qa devqaNode
+    class freeze,docker rcNode
+    class staging,uat preprodNode
+    class canary,monitor releaseNode
+    class approval1,approval2 approvalNode
+    class prd prdNode
+
+    style ci fill:#eff6ff,stroke:#2563eb,color:#1e3a8a
+    style devqa fill:#ecfeff,stroke:#0891b2,color:#164e63
+    style rc fill:#fffbeb,stroke:#d97706,color:#78350f
+    style preprod fill:#f5f3ff,stroke:#7c3aed,color:#4c1d95
+    style release fill:#f0fdf4,stroke:#16a34a,color:#14532d
 ```
 
 ## Code Freeze
@@ -74,6 +96,22 @@ flowchart TD
     end
     image --> promotion
     promotion --> release["正式 Release：v2.5.0<br/>沿用 rc 映像，不再重新建置"]
+
+    classDef rcNode fill:#fde68a,stroke:#d97706,color:#78350f
+    classDef imageNode fill:#fed7aa,stroke:#c2410c,color:#7c2d12
+    classDef preprodNode fill:#ddd6fe,stroke:#7c3aed,color:#4c1d95
+    classDef canaryNode fill:#bbf7d0,stroke:#16a34a,color:#14532d
+    classDef prdNode fill:#16a34a,stroke:#14532d,color:#ffffff,stroke-width:2px
+    classDef releaseNode fill:#166534,stroke:#14532d,color:#ffffff,stroke-width:2px
+
+    class freeze,tag,docker rcNode
+    class image imageNode
+    class staging,uat preprodNode
+    class canary canaryNode
+    class prd prdNode
+    class release releaseNode
+
+    style promotion fill:#f0fdf4,stroke:#16a34a,color:#14532d
 ```
 
 ## Jenkins Pipeline
