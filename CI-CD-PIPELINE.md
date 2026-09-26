@@ -12,45 +12,22 @@
 - 監控與視覺化（Prometheus、Grafana）
 - 持續整合與持續部署（Jenkins）
 
-## Pipeline 流程（放階段架構圖）
+## Pipeline 流程
 
-```
-Build
-  ↓
-Test
-  ↓
-Deploy DEV
-  ↓
-Deploy QA
-  ↓
-──────────────
-  Code Freeze
-  Release Candidate（RC）
-──────────────
-  ↓
-docker.build
-  Build once
-  my-app:<rc-tag>
-  ↓
-Deploy Staging      ← 同一映像
-  ↓
-Deploy UAT          ← 同一映像
-  ↓
-┌─────────────────┐
-│ Approval #1     │
-│ Deploy Canary?  │
-└────────┬────────┘
-         ↓
-   Canary Deploy    ← 同一映像
-         ↓
-   Monitor / Test
-         ↓
-┌─────────────────┐
-│ Approval #2     │
-│ Deploy to PRD?  │
-└────────┬────────┘
-         ↓
-   PRD Full Deploy  ← Promotion，同一映像
+```mermaid
+flowchart TD
+    build[Build] --> test[Test]
+    test --> dev[Deploy DEV]
+    dev --> qa[Deploy QA]
+    qa --> freeze["Code Freeze / Release Candidate（RC）"]
+    freeze --> docker["docker.build<br/>Build once · my-app:rc-tag"]
+    docker --> staging["Deploy Staging · 同一映像"]
+    staging --> uat["Deploy UAT · 同一映像"]
+    uat --> approval1{"Approval #1<br/>Deploy Canary?"}
+    approval1 --> canary["Canary Deploy · 同一映像"]
+    canary --> monitor["Monitor / Test"]
+    monitor --> approval2{"Approval #2<br/>Deploy to PRD?"}
+    approval2 --> prd["PRD Full Deploy · Promotion，同一映像"]
 ```
 
 Build once, deploy many times。Code Freeze 後只做一次 `docker.build`，正式 Release 以這份映像為準，之後各環境都部署同一份，一路 Promotion 到 PRD，不再重新建置。
