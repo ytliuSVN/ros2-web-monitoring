@@ -28,16 +28,20 @@ Deploy QA
   Release Candidate（RC）
 ──────────────
   ↓
-Deploy Staging
+docker.build
+  Build once
+  my-app:<rc-tag>
   ↓
-Deploy UAT
+Deploy Staging      ← 同一映像
+  ↓
+Deploy UAT          ← 同一映像
   ↓
 ┌─────────────────┐
 │ Approval #1     │
 │ Deploy Canary?  │
 └────────┬────────┘
          ↓
-   Canary Deploy
+   Canary Deploy    ← 同一映像
          ↓
    Monitor / Test
          ↓
@@ -46,8 +50,10 @@ Deploy UAT
 │ Deploy to PRD?  │
 └────────┬────────┘
          ↓
-   PRD Full Deploy
+   PRD Full Deploy  ← Promotion，同一映像
 ```
+
+Build once, deploy many times。Code Freeze 後只做一次 `docker.build`，正式 Release 以這份映像為準，之後各環境都部署同一份，一路 Promotion 到 PRD，不再重新建置。
 
 ## Code Freeze
 
@@ -61,12 +67,16 @@ Code Freeze
       ↓
 Git Tag: v2.5.0-rc.1
       ↓
-Build
+docker.build（Build once）
       ↓
 Docker Image:
 my-app:2.5.0-rc.1
       ↓
-Staging
+Staging → UAT → Canary → PRD
+（deploy many times：同一映像一路 Promotion）
+      ↓
+正式 Release：v2.5.0
+（沿用 rc 映像，不再重新建置）
 ```
 
 ## Jenkins Pipeline
@@ -102,6 +112,12 @@ pipeline {
         stage('Deploy QA') {
             steps {
                 sh './deploy.sh qa'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t my-app:${TAG} .'
             }
         }
 
