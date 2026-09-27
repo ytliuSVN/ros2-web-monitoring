@@ -20,7 +20,7 @@
 
 ## 架構
 
-![架構](docs/architecture.svg)
+![GNSS Data Streaming Pipeline](docs/architecture.svg)
 
 
 各層職責如下：
