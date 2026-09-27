@@ -9,6 +9,7 @@
 3. [Pipeline 流程](#pipeline-流程)
 4. [Code Freeze](#code-freeze)
 5. [Jenkins Pipeline](#jenkins-pipeline)
+6. [Canary Deploy 與 Ansible](#canary-deploy-與-ansible)
 
 ---
 
@@ -205,4 +206,48 @@ pipeline {
         }
     }
 }
+```
+
+## Canary Deploy 與 Ansible
+
+- 假設艦隊有 10 艘船，即 10 台 server node
+- Jenkins 負責 CI/CD orchestration：等待人工核准，並決定這次要部署哪一批節點
+- Ansible 負責 Remote Deployment：SSH to remote host、apply configuration、run 同一份 Release image
+
+`./deploy.sh canary` 與 `./deploy.sh prd` 都是呼叫同一份 Ansible playbook，差別只在目標主機範圍。
+
+| 階段 | Jenkins 決策 | Ansible 實際部署 |
+| --- | --- | --- |
+| Canary Deploy | Approval #1 通過後，只選 1 台 | 1 / 10 |
+| PRD Full Deploy | Monitor / Test 確認 Canary 沒問題，且 Approval #2 通過後 | 10 / 10 |
+
+Inventory：
+
+```ini
+[canary]
+vessel-01
+
+[fleet]
+vessel-01
+vessel-02
+vessel-03
+vessel-04
+vessel-05
+vessel-06
+vessel-07
+vessel-08
+vessel-09
+vessel-10
+```
+
+Canary 階段只對 `canary` 群組遠端部署，其餘 9 台維持現行版本：
+
+```bash
+ansible-playbook deploy.yml --limit canary
+```
+
+Canary 節點確認沒問題後，PRD 階段對整個 `fleet` 遠端部署：
+
+```bash
+ansible-playbook deploy.yml --limit fleet
 ```
