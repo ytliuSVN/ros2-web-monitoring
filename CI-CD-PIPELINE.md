@@ -214,7 +214,7 @@ pipeline {
 - Jenkins 負責 CI/CD orchestration：等待人工核准，並決定這次要部署哪一批節點
 - Ansible 負責 Remote Deployment：SSH to remote host、apply configuration、run 同一份 Release image
 
-`./deploy.sh canary` 與 `./deploy.sh prd` 都是呼叫同一份 Ansible playbook，差別只在目標主機範圍。
+Jenkins 的 Canary / PRD stage 分別執行 `./deploy.sh canary` 與 `./deploy.sh prd`。`deploy.sh` 再呼叫同一份 Ansible playbook `deploy.yml`，差別只在目標主機範圍。
 
 | 階段 | Jenkins 決策 | Ansible 實際部署 |
 | --- | --- | --- |
