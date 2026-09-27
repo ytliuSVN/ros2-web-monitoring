@@ -1,20 +1,21 @@
 # CI/CD Pipeline
 
-船廠研發團隊部署至遠端艦隊。
+船廠研發團隊把系統部署到遠端艦隊。Jenkins 負責 CI/CD orchestration，Ansible 負責 Remote Deployment；Code Freeze 後只建置一次 Release image，再一路 Promotion 到正式環境。
 
 ## 目錄
 
-1. [簡介](#簡介)
+1. [架構](#架構)
 2. [工具與技術](#工具與技術)
 3. [Pipeline 流程](#pipeline-流程)
 4. [Code Freeze](#code-freeze)
-5. [Jenkins Pipeline](#jenkins-pipeline)
+5. [CI/CD Orchestration](#cicd-orchestration)
+6. [Canary Remote Deployment](#canary-remote-deployment)
 
 ---
 
-## 簡介
+## 架構
 
-![CI/CD 高層架構](docs/ci-cd-architecture.svg)
+![CI/CD 架構](docs/ci-cd-architecture.svg)
 
 ## 工具與技術
 
@@ -26,9 +27,9 @@
 
 ## Pipeline 流程
 
-> Build once, deploy many times
-
 Code Freeze 後只做一次 `docker.build`，正式 Release 以這份映像為準，之後各環境都部署同一份，一路 Promotion 到 PRD，不再重新建置。
+
+> Build Once, Deploy Anywhere
 
 ```mermaid
 flowchart TD
@@ -100,7 +101,7 @@ flowchart TD
     freeze[Code Freeze] --> tag["Git Tag: v2.5.0-rc.1"]
     tag --> docker["docker.build<br/>Build once"]
     docker --> image["Docker Image<br/>my-app:2.5.0-rc.1"]
-    subgraph promotion["deploy many times：同一映像一路 Promotion"]
+    subgraph promotion["Deploy Anywhere：同一映像一路 Promotion"]
         direction LR
         staging[Staging] --> uat[UAT]
         uat --> canary[Canary]
@@ -126,9 +127,11 @@ flowchart TD
     style promotion fill:#f0fdf4,stroke:#16a34a,color:#14532d
 ```
 
-## Jenkins Pipeline
+## CI/CD Orchestration
 
-### Multi-stage Pipeline
+Jenkins 負責 CI/CD orchestration。各部署 stage 執行 `deploy.sh`。
+
+### Jenkins Pipeline
 
 ```
 pipeline {
@@ -205,4 +208,48 @@ pipeline {
         }
     }
 }
+```
+
+## Canary Remote Deployment
+
+- 假設艦隊有 10 艘船，即 10 台 server node
+- Jenkins 負責 CI/CD orchestration：等待人工核准，並決定這次要部署哪一批節點
+- Ansible 負責 Remote Deployment：SSH to remote host、apply configuration、run 同一份 Release image
+
+Jenkins 的 Canary / PRD stage 分別執行 `./deploy.sh canary` 與 `./deploy.sh prd`。`deploy.sh` 再呼叫同一份 Ansible playbook `deploy.yml`，差別只在目標主機範圍。
+
+| 階段 | Jenkins 決策 | Ansible 實際部署 |
+| --- | --- | --- |
+| Canary Deploy | Approval #1 通過後，只選 1 台 | 1 / 10 |
+| PRD Full Deploy | Monitor / Test 確認 Canary 沒問題，且 Approval #2 通過後 | 10 / 10 |
+
+Inventory：
+
+```ini
+[canary]
+vessel-01
+
+[fleet]
+vessel-01
+vessel-02
+vessel-03
+vessel-04
+vessel-05
+vessel-06
+vessel-07
+vessel-08
+vessel-09
+vessel-10
+```
+
+Canary 階段只對 `canary` 群組遠端部署，其餘 9 台維持現行版本：
+
+```bash
+ansible-playbook deploy.yml --limit canary
+```
+
+Canary 節點確認沒問題後，PRD 階段對整個 `fleet` 遠端部署：
+
+```bash
+ansible-playbook deploy.yml --limit fleet
 ```
