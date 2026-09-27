@@ -1,21 +1,21 @@
 # CI/CD Pipeline
 
-船廠研發團隊部署至遠端艦隊。
+船廠研發團隊把系統部署到遠端艦隊。Jenkins 負責 CI/CD orchestration，Ansible 負責 Remote Deployment；Code Freeze 後只建置一次 Release image，再一路 Promotion 到正式環境。
 
 ## 目錄
 
-1. [簡介](#簡介)
+1. [架構](#架構)
 2. [工具與技術](#工具與技術)
 3. [Pipeline 流程](#pipeline-流程)
 4. [Code Freeze](#code-freeze)
-5. [Jenkins Pipeline](#jenkins-pipeline)
-6. [Canary Deploy 與 Ansible](#canary-deploy-與-ansible)
+5. [CI/CD Orchestration](#cicd-orchestration)
+6. [Canary Remote Deployment](#canary-remote-deployment)
 
 ---
 
-## 簡介
+## 架構
 
-![CI/CD 高層架構](docs/ci-cd-architecture.svg)
+![CI/CD 架構](docs/ci-cd-architecture.svg)
 
 ## 工具與技術
 
@@ -127,9 +127,11 @@ flowchart TD
     style promotion fill:#f0fdf4,stroke:#16a34a,color:#14532d
 ```
 
-## Jenkins Pipeline
+## CI/CD Orchestration
 
-### Multi-stage Pipeline
+Jenkins 負責 CI/CD orchestration。各部署 stage 執行 `deploy.sh`。
+
+### Jenkins Pipeline
 
 ```
 pipeline {
@@ -208,7 +210,7 @@ pipeline {
 }
 ```
 
-## Canary Deploy 與 Ansible
+## Canary Remote Deployment
 
 - 假設艦隊有 10 艘船，即 10 台 server node
 - Jenkins 負責 CI/CD orchestration：等待人工核准，並決定這次要部署哪一批節點
