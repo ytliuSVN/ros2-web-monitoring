@@ -15,7 +15,7 @@
 
 ## 架構
 
-![CI/CD 架構](docs/ci-cd-architecture.svg)
+![CI/CD Pipeline](docs/ci-cd-architecture.svg)
 
 ## 工具與技術
 
