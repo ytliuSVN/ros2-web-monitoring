@@ -26,9 +26,9 @@
 
 ## Pipeline 流程
 
-> Build once, deploy many times
-
 Code Freeze 後只做一次 `docker.build`，正式 Release 以這份映像為準，之後各環境都部署同一份，一路 Promotion 到 PRD，不再重新建置。
+
+> Build Once, Deploy Anywhere
 
 ```mermaid
 flowchart TD
@@ -100,7 +100,7 @@ flowchart TD
     freeze[Code Freeze] --> tag["Git Tag: v2.5.0-rc.1"]
     tag --> docker["docker.build<br/>Build once"]
     docker --> image["Docker Image<br/>my-app:2.5.0-rc.1"]
-    subgraph promotion["deploy many times：同一映像一路 Promotion"]
+    subgraph promotion["Deploy Anywhere：同一映像一路 Promotion"]
         direction LR
         staging[Staging] --> uat[UAT]
         uat --> canary[Canary]
