@@ -29,9 +29,9 @@
 
 Code Freeze 後只做一次 `docker.build`，正式 Release 以這份映像為準，之後各環境都部署同一份，一路 Promotion 到 PRD，不再重新建置。
 
-這裡的 CD 是 Continuous Delivery（持續交付），而且是半自動。DEV、QA、Staging、UAT 由 Jenkins 自動部署；只有要進 Canary 與 PRD 才停下來等人審核，核准後才部署。
-
 > Build Once, Deploy Anywhere
+
+這裡的 CD 是 Continuous Delivery（持續交付），而且是半自動。DEV、QA、Staging、UAT 由 Jenkins 自動部署；只有要進 Canary 與 PRD 才停下來等人審核，核准後才部署。
 
 ```mermaid
 flowchart TD
