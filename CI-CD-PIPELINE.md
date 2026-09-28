@@ -21,13 +21,15 @@
 
 - 版本控制與協作（Git、GitHub）
 - 容器化與編排（Docker、Kubernetes）
-- 基礎設施與組態管理（Terraform、Ansible）
+- 基礎設施與設定管理（Terraform、Ansible）
 - 監控與視覺化（Prometheus、Grafana）
-- 持續整合與持續部署（Jenkins）
+- 持續整合與持續交付（Jenkins）
 
 ## Pipeline 流程
 
 Code Freeze 後只做一次 `docker.build`，正式 Release 以這份映像為準，之後各環境都部署同一份，一路 Promotion 到 PRD，不再重新建置。
+
+這裡的 CD 是 Continuous Delivery（持續交付），而且是半自動。DEV、QA、Staging、UAT 由 Jenkins 自動部署；只有要進 Canary 與 PRD 才停下來等人審核，核准後才部署。
 
 > Build Once, Deploy Anywhere
 
